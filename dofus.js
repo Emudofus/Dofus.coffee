@@ -21,7 +21,7 @@
 
 
 (function() {
-  var AUTH_ADRESS, AUTH_PORT, Account, AuthNetClient, AuthNetServer, AuthServer, CleanPacket, ConnectDatabase, DATABASE_DB, DATABASE_PASSWORD, DATABASE_USER, DOFUS_VERSION, GenerateString, GetAccountFromSQL, Main, MySQL, RandNumber, StartDatabaseServices, StartNetWorkServices, UtilsHash, WritePlatformInformations;
+  var AUTH_ADRESS, AUTH_PORT, Account, AuthNetClient, AuthNetServer, AuthServer, CleanPacket, ConnectDatabase, DATABASE_DB, DATABASE_PASSWORD, DATABASE_USER, DOFUS_VERSION, GenerateString, Main, MySQL, RandNumber, StartDatabaseServices, StartNetWorkServices, UtilsHash, WritePlatformInformations;
 
   AUTH_ADRESS = "127.0.0.1";
 
@@ -152,6 +152,20 @@
 
     Account.prototype.GetMd5Password = function(sipher) {};
 
+    Account.FindByUsername = function(username, callback) {
+      var account, query,
+        _this = this;
+      query = "SELECT * FROM accounts WHERE Username='" + username + "'";
+      account = null;
+      return MySQL.query(query).addListener('row', function(r) {
+        account = new Account();
+        account.id = r.Id;
+        account.username = r.Username;
+        account.password = r.Password;
+        return callback.call(callback, account);
+      });
+    };
+
     return Account;
 
   })();
@@ -191,15 +205,6 @@
     return console.log('Connected to database !');
   };
 
-  GetAccountFromSQL = function(username) {
-    var query,
-      _this = this;
-    query = "SELECT * FROM accounts WHERE Username='" + username + "'";
-    return MySQL.query(query).addListener('row', function(r) {
-      return console.dir(r);
-    });
-  };
-
   /*
   	Start Program Methods
   */
@@ -210,10 +215,13 @@
   MySQL = require('mysql');
 
   Main = function() {
+    var account;
     WritePlatformInformations();
     StartDatabaseServices();
     StartNetWorkServices();
-    return GetAccountFromSQL('test');
+    return account = Account.FindByUsername('test', function(account) {
+      return console.log(account);
+    });
   };
 
   WritePlatformInformations = function() {

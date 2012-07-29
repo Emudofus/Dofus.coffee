@@ -112,7 +112,15 @@ class Account
 
     GetMd5Password: (sipher) ->
 
-
+    @FindByUsername: (username, callback) ->
+        query = "SELECT * FROM accounts WHERE Username='" + username + "'"
+        account = null
+        MySQL.query(query).addListener 'row', (r) =>
+            account = new Account()
+            account.id = r.Id
+            account.username = r.Username
+            account.password = r.Password
+            callback.call(callback, account)
 
 
 
@@ -133,15 +141,6 @@ GenerateString = (lenght) ->
 CleanPacket = (packet) ->
     return packet.replace("\x0a", "").replace("\n", "").split("\x00")
 
-
-
-
-
-
-
-
-
-
 ###
     Database Methods
 ###
@@ -152,12 +151,6 @@ ConnectDatabase = () ->
     MySQL.auto_prepare = true;
     MySQL.auth(DATABASE_DB, DATABASE_USER, DATABASE_PASSWORD);
     console.log('Connected to database !')
-
-GetAccountFromSQL = (username) ->
-    query = "SELECT * FROM accounts WHERE Username='" + username + "'"
-    MySQL.query(query).addListener 'row', (r) =>
-        console.dir(r)
-        
 
 ###
 	Start Program Methods
@@ -170,7 +163,6 @@ Main = () ->
     WritePlatformInformations()
     StartDatabaseServices()
     StartNetWorkServices()
-    GetAccountFromSQL('test')
 
 WritePlatformInformations = () ->
     console.log("Your node.js details:")
