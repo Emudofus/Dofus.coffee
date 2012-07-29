@@ -1,2 +1,2 @@
-node C:\Users\Nicolas\Desktop\Developpement\JS\Dofus.coffe\dofus.js
+node C:\Users\Nicolas\Desktop\Developpement\JS\test\Dofus.coffee\dofus.js
 cmd

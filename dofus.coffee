@@ -17,9 +17,24 @@
 	Créé par NightWolf
 ###
 
+
+
+
+
+
 AUTH_ADRESS = "127.0.0.1"
 AUTH_PORT = 444
+
 DOFUS_VERSION = "1.29.1"
+
+DATABASE_USER = "root"
+DATABASE_PASSWORD = ""
+DATABASE_DB = "arkalia_realm"
+
+
+
+
+
 
 ###
 	Network class
@@ -39,7 +54,6 @@ class AuthNetServer
     event.pipe(event);
     client = new AuthNetClient(event)
 
-
 class AuthNetClient
     constructor: (@socket) ->
         @state = 0
@@ -51,7 +65,7 @@ class AuthNetClient
         @Send('HC' + @encryptKey)
 
     Send: (packet) ->
-        console.log('Send packet : ' + packet)
+        console.log('Send packet => ' + packet)
         @socket.write(packet + "\x00")
 
     onReceiveData: (event) ->
@@ -63,7 +77,7 @@ class AuthNetClient
 
     handlePacket: (packet) ->
         if packet != "" and packet != "Af"
-            console.log('Received packet : ' + packet)
+            console.log('Received packet <= ' + packet)
             switch @state
                 when 0
                     @checkVersion(packet)
@@ -79,7 +93,28 @@ class AuthNetClient
             @Send('AlEv' + DOFUS_VERSION)
 
     checkAccount: (packet) -> #Check client account requested
-        #TODO: MySql Database
+        @state = -1
+        data = packet.split('#1')
+        username = data[0]
+        password = data[1]
+
+
+
+###
+    Client methods
+###
+
+class Account
+    constructor: () ->
+        @id = -1
+        @username = ""
+        @password = ""
+
+    GetMd5Password: (sipher) ->
+
+
+
+
 
 ###
     Utilities methods
@@ -99,17 +134,43 @@ CleanPacket = (packet) ->
     return packet.replace("\x0a", "").replace("\n", "").split("\x00")
 
 
+
+
+
+
+
+
+
+
+###
+    Database Methods
+###
+
+
+
+ConnectDatabase = () ->
+    MySQL.auto_prepare = true;
+    MySQL.auth(DATABASE_DB, DATABASE_USER, DATABASE_PASSWORD);
+    console.log('Connected to database !')
+
+GetAccountFromSQL = (username) ->
+    query = "SELECT * FROM accounts WHERE Username='" + username + "'"
+    MySQL.query(query).addListener 'row', (r) =>
+        console.dir(r)
+        
+
 ###
 	Start Program Methods
 ###
 
 AuthServer = null
 MySQL = require 'mysql'
-MySQLProvider = null
 
 Main = () ->
     WritePlatformInformations()
+    StartDatabaseServices()
     StartNetWorkServices()
+    GetAccountFromSQL('test')
 
 WritePlatformInformations = () ->
     console.log("Your node.js details:")
@@ -119,8 +180,10 @@ WritePlatformInformations = () ->
 
 StartDatabaseServices = () ->
     console.log('Starting database services ...')
-    MySQL = require('mysql')
-    MySQLProvider = mysql.createConnection({host     : '127.0.0.1', user     : 'root',password : '', })
+    MySQL = require('mysql-native').createTCPClient();
+    ConnectDatabase()
+    #MySQLProvider = mysql.createConnection({host     : '127.0.0.1', user     : 'root',password : '', })
+
 
 StartNetWorkServices = () ->
     console.log('Starting network services ...')

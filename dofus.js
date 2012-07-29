@@ -21,13 +21,19 @@
 
 
 (function() {
-  var AUTH_ADRESS, AUTH_PORT, AuthNetClient, AuthNetServer, AuthServer, CleanPacket, DOFUS_VERSION, GenerateString, Main, MySQL, MySQLProvider, RandNumber, StartDatabaseServices, StartNetWorkServices, UtilsHash, WritePlatformInformations;
+  var AUTH_ADRESS, AUTH_PORT, Account, AuthNetClient, AuthNetServer, AuthServer, CleanPacket, ConnectDatabase, DATABASE_DB, DATABASE_PASSWORD, DATABASE_USER, DOFUS_VERSION, GenerateString, GetAccountFromSQL, Main, MySQL, RandNumber, StartDatabaseServices, StartNetWorkServices, UtilsHash, WritePlatformInformations;
 
   AUTH_ADRESS = "127.0.0.1";
 
   AUTH_PORT = 444;
 
   DOFUS_VERSION = "1.29.1";
+
+  DATABASE_USER = "root";
+
+  DATABASE_PASSWORD = "";
+
+  DATABASE_DB = "arkalia_realm";
 
   /*
   	Network class
@@ -79,7 +85,7 @@
     }
 
     AuthNetClient.prototype.Send = function(packet) {
-      console.log('Send packet : ' + packet);
+      console.log('Send packet => ' + packet);
       return this.socket.write(packet + "\x00");
     };
 
@@ -100,7 +106,7 @@
 
     AuthNetClient.prototype.handlePacket = function(packet) {
       if (packet !== "" && packet !== "Af") {
-        console.log('Received packet : ' + packet);
+        console.log('Received packet <= ' + packet);
         switch (this.state) {
           case 0:
             return this.checkVersion(packet);
@@ -119,9 +125,34 @@
       }
     };
 
-    AuthNetClient.prototype.checkAccount = function(packet) {};
+    AuthNetClient.prototype.checkAccount = function(packet) {
+      var data, password, username;
+      this.state = -1;
+      data = packet.split('#1');
+      username = data[0];
+      return password = data[1];
+    };
 
     return AuthNetClient;
+
+  })();
+
+  /*
+      Client methods
+  */
+
+
+  Account = (function() {
+
+    function Account() {
+      this.id = -1;
+      this.username = "";
+      this.password = "";
+    }
+
+    Account.prototype.GetMd5Password = function(sipher) {};
+
+    return Account;
 
   })();
 
@@ -150,6 +181,26 @@
   };
 
   /*
+      Database Methods
+  */
+
+
+  ConnectDatabase = function() {
+    MySQL.auto_prepare = true;
+    MySQL.auth(DATABASE_DB, DATABASE_USER, DATABASE_PASSWORD);
+    return console.log('Connected to database !');
+  };
+
+  GetAccountFromSQL = function(username) {
+    var query,
+      _this = this;
+    query = "SELECT * FROM accounts WHERE Username='" + username + "'";
+    return MySQL.query(query).addListener('row', function(r) {
+      return console.dir(r);
+    });
+  };
+
+  /*
   	Start Program Methods
   */
 
@@ -158,11 +209,11 @@
 
   MySQL = require('mysql');
 
-  MySQLProvider = null;
-
   Main = function() {
     WritePlatformInformations();
-    return StartNetWorkServices();
+    StartDatabaseServices();
+    StartNetWorkServices();
+    return GetAccountFromSQL('test');
   };
 
   WritePlatformInformations = function() {
@@ -174,12 +225,8 @@
 
   StartDatabaseServices = function() {
     console.log('Starting database services ...');
-    MySQL = require('mysql');
-    return MySQLProvider = mysql.createConnection({
-      host: '127.0.0.1',
-      user: 'root',
-      password: ''
-    });
+    MySQL = require('mysql-native').createTCPClient();
+    return ConnectDatabase();
   };
 
   StartNetWorkServices = function() {

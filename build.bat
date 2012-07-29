@@ -1,1 +1,1 @@
-coffee -c C:\Users\Nicolas\Desktop\Developpement\JS\Dofus.coffe\dofus.coffee
+coffee -c C:\Users\Nicolas\Desktop\Developpement\JS\test\Dofus.coffee\dofus.coffee
